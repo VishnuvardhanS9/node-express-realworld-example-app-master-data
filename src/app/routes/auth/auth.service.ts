@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcryptjs';
+import { validate } from 'email-validator';
 import { RegisterInput } from './register-input.model';
 import prisma from '../../../prisma/prisma-client';
 import HttpException from '../../models/http-exception.model';
@@ -51,6 +52,10 @@ export const createUser = async (input: RegisterInput): Promise<RegisteredUser> 
 
   if (!password) {
     throw new HttpException(422, { errors: { password: ["can't be blank"] } });
+  }
+
+  if (!validate(email)) {
+    throw new HttpException(422, { errors: { email: ["is invalid"] } });
   }
 
   await checkUserUniqueness(email, username);
