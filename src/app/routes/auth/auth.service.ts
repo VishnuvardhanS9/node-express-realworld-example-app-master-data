@@ -98,6 +98,10 @@ export const login = async (userPayload: any) => {
     throw new HttpException(422, { errors: { password: ["can't be blank"] } });
   }
 
+  if (!validate(email)) {
+    throw new HttpException(422, { errors: { email: ["is invalid"] } });
+  }
+
   const user = await prisma.user.findUnique({
     where: {
       email,
