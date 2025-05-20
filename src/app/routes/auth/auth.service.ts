@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcryptjs';
+import { validate } from 'email-validator';
 import { RegisterInput } from './register-input.model';
 import prisma from '../../../prisma/prisma-client';
 import HttpException from '../../models/http-exception.model';
@@ -53,6 +54,10 @@ export const createUser = async (input: RegisterInput): Promise<RegisteredUser> 
     throw new HttpException(422, { errors: { password: ["can't be blank"] } });
   }
 
+  if (!validate(email)) {
+    throw new HttpException(422, { errors: { email: ["is invalid"] } });
+  }
+
   await checkUserUniqueness(email, username);
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -91,6 +96,10 @@ export const login = async (userPayload: any) => {
 
   if (!password) {
     throw new HttpException(422, { errors: { password: ["can't be blank"] } });
+  }
+
+  if (!validate(email)) {
+    throw new HttpException(422, { errors: { email: ["is invalid"] } });
   }
 
   const user = await prisma.user.findUnique({
@@ -150,8 +159,12 @@ export const getCurrentUser = async (id: number) => {
 
 export const updateUser = async (userPayload: any, id: number) => {
   const { email, username, password, image, bio } = userPayload;
-  let hashedPassword;
 
+  if (email && !validate(email)) {
+    throw new HttpException(422, { errors: { email: ["is invalid"] } });
+  }
+
+  let hashedPassword;
   if (password) {
     hashedPassword = await bcrypt.hash(password, 10);
   }
