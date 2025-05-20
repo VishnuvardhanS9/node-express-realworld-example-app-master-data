@@ -6,35 +6,6 @@ import { RegisteredUser } from './registered-user.model';
 import generateToken from './token.utils';
 import { User } from './user.model';
 
-const checkUserUniqueness = async (email: string, username: string) => {
-  const existingUserByEmail = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-    select: {
-      id: true,
-    },
-  });
-
-  const existingUserByUsername = await prisma.user.findUnique({
-    where: {
-      username,
-    },
-    select: {
-      id: true,
-    },
-  });
-
-  if (existingUserByEmail || existingUserByUsername) {
-    throw new HttpException(422, {
-      errors: {
-        ...(existingUserByEmail ? { email: ['has already been taken'] } : {}),
-        ...(existingUserByUsername ? { username: ['has already been taken'] } : {}),
-      },
-    });
-  }
-};
-
 export const createUser = async (input: RegisterInput): Promise<RegisteredUser> => {
   const email = input.email?.trim();
   const username = input.username?.trim();
@@ -53,32 +24,43 @@ export const createUser = async (input: RegisterInput): Promise<RegisteredUser> 
     throw new HttpException(422, { errors: { password: ["can't be blank"] } });
   }
 
-  await checkUserUniqueness(email, username);
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        username,
+        email,
+        password: hashedPassword,
+        ...(image ? { image } : {}),
+        ...(bio ? { bio } : {}),
+        ...(demo ? { demo } : {}),
+      },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        bio: true,
+        image: true,
+      },
+    });
 
-  const user = await prisma.user.create({
-    data: {
-      username,
-      email,
-      password: hashedPassword,
-      ...(image ? { image } : {}),
-      ...(bio ? { bio } : {}),
-      ...(demo ? { demo } : {}),
-    },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      bio: true,
-      image: true,
-    },
-  });
+    return {
+      ...user,
+      token: generateToken(user.id),
+    };
+  } catch (err: any) {
+    if (err.code === "P2002" && Array.isArray(err.meta?.target)) {
+      const errors: Record<string, string[]> = {};
 
-  return {
-    ...user,
-    token: generateToken(user.id),
-  };
+      for (const field of err.meta.target as string[]) {
+        errors[field] = ["has already been taken"];
+      }
+
+      throw new HttpException(422, { errors });
+    }
+    throw err;
+  }
 };
 
 export const login = async (userPayload: any) => {
