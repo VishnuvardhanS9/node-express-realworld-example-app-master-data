@@ -159,8 +159,12 @@ export const getCurrentUser = async (id: number) => {
 
 export const updateUser = async (userPayload: any, id: number) => {
   const { email, username, password, image, bio } = userPayload;
-  let hashedPassword;
 
+  if (email && !validate(email)) {
+    throw new HttpException(422, { errors: { email: ["is invalid"] } });
+  }
+
+  let hashedPassword;
   if (password) {
     hashedPassword = await bcrypt.hash(password, 10);
   }
