@@ -20,7 +20,7 @@ npm install
 
 This project depends on some environment variables.
 If you are running this project locally, create a `.env` file at the root for these variables.
-Your host provider should included a feature to set them there directly to avoid exposing them.
+Your host provider should include a feature to set them there directly to avoid exposing them.
 
 Here are the required ones:
 
