@@ -6,13 +6,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Install TypeScript compiler globally
+# Install TypeScript compiler
 RUN npm install -g typescript
 
 # Copy source code
 COPY . .
 
-# Transpile TypeScript to JavaScript (NO Nx, NO esbuild)
+# Transpile TypeScript to JavaScript
 RUN tsc
 
 # Generate Prisma client
