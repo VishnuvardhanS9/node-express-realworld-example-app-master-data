@@ -2,17 +2,22 @@ FROM node:18
 
 WORKDIR /app
 
+# Install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Install ts-node to run TS directly
-RUN npm install -g ts-node typescript
+# Install TypeScript compiler globally
+RUN npm install -g typescript
 
+# Copy source code
 COPY . .
+
+# Transpile TypeScript to JavaScript (NO Nx, NO esbuild)
+RUN tsc
 
 # Generate Prisma client
 RUN npx prisma generate --schema=src/prisma/schema.prisma || true
 
 EXPOSE 3000
 
-CMD ["ts-node", "src/main.ts"]
+CMD ["node", "dist/main.js"]
