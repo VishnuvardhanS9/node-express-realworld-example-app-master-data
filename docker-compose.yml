@@ -1,13 +1,10 @@
-version: "3.8"
-
 services:
   api:
     build: .
     container_name: realworld-api
     environment:
-      NODE_ENV: production
+      PORT: 3000
       MONGODB_URI: mongodb://mongo:27017/realworld
-      SECRET: supersecretkey
     ports:
       - "3000:3000"
     depends_on:
